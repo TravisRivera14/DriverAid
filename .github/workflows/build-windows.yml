@@ -1,0 +1,55 @@
+name: Build Windows EXE & Installer
+
+on:
+  workflow_dispatch: {}  # Lo ejecutas manualmente desde la pestaña Actions
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build deps
+        run: |
+          pip install --upgrade pip
+          pip install pyinstaller wmi pywin32
+
+      - name: Ensure folders exist
+        run: |
+          if not exist drivers mkdir drivers
+          if not exist reports mkdir reports
+
+      - name: Build standalone EXE (PyInstaller)
+        run: |
+          pyinstaller --onefile --uac-admin ^
+            --add-data "reports;reports" ^
+            --add-data "drivers;drivers" ^
+            --add-data "win_backend.py;." ^
+            --add-data "sim_backend.py;." ^
+            main.py
+
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DriverAid-exe
+          path: dist\main.exe
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Build Installer (Inno Setup)
+        run: |
+          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Qp DriverAid.iss
+
+      - name: Upload Installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DriverAid-Setup
+          path: Output\DriverAid-Setup.exe
+        
