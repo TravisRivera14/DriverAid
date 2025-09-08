@@ -20,22 +20,20 @@ jobs:
           pip install --upgrade pip
           pip install pyinstaller wmi pywin32
 
-      # 👇 Usar CMD (no PowerShell) para if not exist ...
+      # PowerShell nativo para crear carpetas
       - name: Ensure folders exist
-        shell: cmd
         run: |
-          if not exist drivers mkdir drivers
-          if not exist reports mkdir reports
+          New-Item -ItemType Directory -Force -Path drivers  | Out-Null
+          New-Item -ItemType Directory -Force -Path reports  | Out-Null
 
-      # 👇 También CMD aquí porque usamos continuaciones con ^
+      # PowerShell: usa backtick ` para continuar línea (NO ^)
       - name: Build standalone EXE (PyInstaller)
-        shell: cmd
         run: |
-          pyinstaller --onefile --uac-admin ^
-            --add-data "reports;reports" ^
-            --add-data "drivers;drivers" ^
-            --add-data "win_backend.py;." ^
-            --add-data "sim_backend.py;." ^
+          pyinstaller --onefile --uac-admin `
+            --add-data "reports;reports" `
+            --add-data "drivers;drivers" `
+            --add-data "win_backend.py;." `
+            --add-data "sim_backend.py;." `
             main.py
 
       - name: Upload EXE artifact
@@ -47,11 +45,10 @@ jobs:
       - name: Install Inno Setup
         run: choco install innosetup -y
 
-      # 👇 CMD de nuevo para la ruta con espacios
+      # PowerShell para ejecutar ISCC (con & para rutas con espacios)
       - name: Build Installer (Inno Setup)
-        shell: cmd
         run: |
-          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Qp DriverAid.iss
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Qp DriverAid.iss
 
       - name: Upload Installer artifact
         uses: actions/upload-artifact@v4
