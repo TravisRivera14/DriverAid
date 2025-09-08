@@ -1,7 +1,7 @@
 name: Build Windows EXE & Installer
 
 on:
-  workflow_dispatch: {}  # Lo ejecutas manualmente desde la pestaña Actions
+  workflow_dispatch: {}
 
 jobs:
   build:
@@ -20,12 +20,16 @@ jobs:
           pip install --upgrade pip
           pip install pyinstaller wmi pywin32
 
+      # 👇 Usar CMD (no PowerShell) para if not exist ...
       - name: Ensure folders exist
+        shell: cmd
         run: |
           if not exist drivers mkdir drivers
           if not exist reports mkdir reports
 
+      # 👇 También CMD aquí porque usamos continuaciones con ^
       - name: Build standalone EXE (PyInstaller)
+        shell: cmd
         run: |
           pyinstaller --onefile --uac-admin ^
             --add-data "reports;reports" ^
@@ -43,7 +47,9 @@ jobs:
       - name: Install Inno Setup
         run: choco install innosetup -y
 
+      # 👇 CMD de nuevo para la ruta con espacios
       - name: Build Installer (Inno Setup)
+        shell: cmd
         run: |
           "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Qp DriverAid.iss
 
@@ -52,4 +58,3 @@ jobs:
         with:
           name: DriverAid-Setup
           path: Output\DriverAid-Setup.exe
-        
