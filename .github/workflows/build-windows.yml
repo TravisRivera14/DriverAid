@@ -6,6 +6,7 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,18 +21,22 @@ jobs:
           pip install --upgrade pip
           pip install pyinstaller wmi pywin32
 
+      # ✅ Usar CMD para crear las carpetas
       - name: Ensure folders exist
+        shell: cmd
         run: |
-          if (-not (Test-Path "drivers")) { New-Item -ItemType Directory -Path "drivers" | Out-Null }
-          if (-not (Test-Path "reports")) { New-Item -ItemType Directory -Path "reports" | Out-Null }
+          if not exist drivers mkdir drivers
+          if not exist reports mkdir reports
 
+      # ✅ Usar CMD aquí también (las ^ funcionan en cmd.exe)
       - name: Build standalone EXE (PyInstaller)
+        shell: cmd
         run: |
-          pyinstaller --onefile --uac-admin `
-            --add-data "reports;reports" `
-            --add-data "drivers;drivers" `
-            --add-data "win_backend.py;." `
-            --add-data "sim_backend.py;." `
+          pyinstaller --onefile --uac-admin ^
+            --add-data "reports;reports" ^
+            --add-data "drivers;drivers" ^
+            --add-data "win_backend.py;." ^
+            --add-data "sim_backend.py;." ^
             main.py
 
       - name: Upload EXE artifact
@@ -41,15 +46,16 @@ jobs:
           path: dist\main.exe
 
       - name: Install Inno Setup
-        run: choco install innosetup -y
+        run: choco install innosetup -y --no-progress
 
+      # ✅ Usar CMD para ISCC.exe
       - name: Build Installer (Inno Setup)
+        shell: cmd
         run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Qp DriverAid.iss
+          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Qp DriverAid.iss
 
       - name: Upload Installer artifact
         uses: actions/upload-artifact@v4
         with:
           name: DriverAid-Setup
           path: Output\DriverAid-Setup.exe
-          
