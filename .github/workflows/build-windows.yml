@@ -21,18 +21,21 @@ jobs:
           pip install --upgrade pip
           pip install pyinstaller wmi pywin32
 
-      # ✅ Usar CMD para crear las carpetas
+      # Crear carpetas necesarias
       - name: Ensure folders exist
         shell: cmd
         run: |
           if not exist drivers mkdir drivers
           if not exist reports mkdir reports
 
-      # ✅ Usar CMD aquí también (las ^ funcionan en cmd.exe)
+      # Construcción del EXE con icono y metadatos
       - name: Build standalone EXE (PyInstaller)
         shell: cmd
         run: |
           pyinstaller --onefile --uac-admin ^
+            --name "DriverAid" ^
+            --icon "assets\DriverAid.ico" ^
+            --version-file "assets\version_info.txt" ^
             --add-data "reports;reports" ^
             --add-data "drivers;drivers" ^
             --add-data "win_backend.py;." ^
@@ -43,12 +46,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: DriverAid-exe
-          path: dist\main.exe
+          path: dist\DriverAid.exe
 
       - name: Install Inno Setup
         run: choco install innosetup -y --no-progress
 
-      # ✅ Usar CMD para ISCC.exe
       - name: Build Installer (Inno Setup)
         shell: cmd
         run: |
